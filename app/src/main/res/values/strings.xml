@@ -2,4 +2,6 @@
     <string name="app_name">WeatherApp</string>
     <string name="title_activity_maps">Map</string>
     <string name="hint_address">Enter Address, City or Zip Code</string>
+    <string name="default_info_title">Default Location</string>
+    <string name="default_info_snippet">No places found, because location permission is disabled.</string>
 </resources>
