@@ -6,9 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
-
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -23,15 +20,16 @@
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.7"/>
+            android:layout_weight="0.6"/>
 
         <TextView
             android:id="@+id/textLocation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_5sdp"
-            android:text="[Mock address to come here]"
+            android:layout_marginTop="@dimen/_2sdp"
+            android:text="@string/hint_drag_pin"
             android:textSize="@dimen/_15sdp"
+            android:background="@drawable/white_border"
             android:gravity="center"
             android:layout_weight="0.1"/>
 
@@ -39,11 +37,7 @@
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_10sdp"
-            android:layout_weight="0.2"/>
+            android:layout_marginTop="@dimen/_3sdp"
+            android:layout_weight="0.3"/>
     </LinearLayout>
-
-
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

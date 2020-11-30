@@ -4,4 +4,7 @@
     <string name="hint_address">Enter Address, City or Zip Code</string>
     <string name="default_info_title">Default Location</string>
     <string name="default_info_snippet">No places found, because location permission is disabled.</string>
+    <string name="hint_drag_pin">Please drag pin to pick place where you \n know need to know the weather of...</string>
+    <string name="action_geolocate">current location</string>
+    <string name="text_need_permission">We need permissions to \n work with Location.</string>
 </resources>

@@ -1,70 +1,55 @@
 package com.dmatrix.weatherapp.activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.dmatrix.weatherapp.R;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.model.PlaceLikelihood;
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
-import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
-import com.google.android.libraries.places.api.net.PlacesClient;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
-
+public class MainActivity extends AppCompatActivity implements
+        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener{
 
     private GoogleMap googleMap;
-    // New variables for Current Place picker
     private static final String TAG = "MapsActivity";
-    private PlacesClient placesClient;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private Location lastKnownLocation;
 
-    private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
+    private LatLng defaultLocation = new LatLng(-26.0979984,27.8140565);
     private static final int DEFAULT_ZOOM = 15;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
 
-
-    private Geocoder geocoder;
     private List<Address> addresses;
     private TextView textLocation;
-    private ImageView imageGeolocate;
+    String city, weatherPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,27 +62,79 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mapFragment.getMapAsync(this);
         }
 
-        textLocation = findViewById(R.id.textLocation);
-        imageGeolocate = findViewById(R.id.ic_geolocate);
-
-        String apiKey = getString(R.string.google_maps_key);
-        Places.initialize(getApplicationContext(), apiKey);
-        placesClient = Places.createClient(this);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
+        textLocation = findViewById(R.id.textLocation);
         getDeviceLocation();
+    }
 
-        imageGeolocate.setOnClickListener(view -> pickCurrentPlace());
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getDeviceLocation();
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
-        this.googleMap.addMarker(new MarkerOptions().position(defaultLocation).title("Marker in Sydney"));
-        this.googleMap.moveCamera(CameraUpdateFactory.newLatLng(defaultLocation));
+        CameraUpdate center=
+                CameraUpdateFactory.newLatLng(defaultLocation);
+        CameraUpdate zoom=CameraUpdateFactory.zoomTo(15);
 
-        //pickCurrentPlace();
-        getDeviceLocation();
+        this.googleMap.moveCamera(center);
+        this.googleMap.animateCamera(zoom);
+
+        if (weatherPosition == null && city == null){
+            weatherPosition = "Weather Postion";
+            city = "Drag to new position";
+        }
+
+        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+            }
+        });
+
+        this.googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+                LatLng position=marker.getPosition();
+
+                Log.d(getClass().getSimpleName(),
+                        String.format("Dragging to %f:%f",
+                                position.latitude,
+                                position.longitude));
+            }
+
+            @Override
+            public void onMarkerDrag(Marker marker) {
+                LatLng position=marker.getPosition();
+
+                Log.d(getClass().getSimpleName(), String.format("Drag from %f:%f",
+                        position.latitude,
+                        position.longitude));
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                LatLng position=marker.getPosition();
+
+                Log.d(getClass().getSimpleName(), String.format("##### Dragged to %f:%f",
+                        position.latitude,
+                        position.longitude));
+                getLocationAddress(position.latitude,position.longitude);
+            }
+        });
+
+        addMarker(this.googleMap, weatherPosition, city);
+    }
+
+    private void addMarker(GoogleMap map, String title, String snippet) {
+        map.addMarker(new MarkerOptions().position(defaultLocation)
+                .title(title)
+                .snippet(snippet)
+                .draggable(true));
     }
 
     @Override
@@ -118,8 +155,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onResume() {
         super.onResume();
-        getDeviceLocation();
     }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        Toast.makeText(this, marker.getTitle(), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_geolocate:
+
+                 pickCurrentPlace();
+                 return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
+
 
     private void getLocationPermission() {
         locationPermissionGranted = false;
@@ -166,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void getLocationAddress(double latitude, double longitude) {
-        geocoder = new Geocoder(this, Locale.getDefault());
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
         try {
             addresses = geocoder.getFromLocation(latitude, longitude, 1);
@@ -175,16 +238,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         String address = addresses.get(0).getAddressLine(0);
-        String city = addresses.get(0).getLocality();
-        String state = addresses.get(0).getAdminArea();
+        city = addresses.get(0).getLocality();
         String country = addresses.get(0).getCountryName();
-        String postalCode = addresses.get(0).getPostalCode();
-        String knownName = addresses.get(0).getFeatureName();
+        weatherPosition = addresses.get(0).getPostalCode();
 
-        Toast.makeText(MainActivity.this, address+" ,"+city+" ,"+postalCode+" ,"+country, Toast.LENGTH_LONG).show();
-        textLocation.setText(address );
+        Toast.makeText(MainActivity.this, address+" ,"+city+" ,"+ weatherPosition +" ,"+country, Toast.LENGTH_LONG).show();
+        textLocation.setText(address);
     }
-
 
     private void pickCurrentPlace() {
         if (googleMap == null) {
@@ -202,7 +262,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .title(getString(R.string.default_info_title))
                     .position(defaultLocation)
                     .snippet(getString(R.string.default_info_snippet)));
-
             getLocationPermission();
         }
     }
