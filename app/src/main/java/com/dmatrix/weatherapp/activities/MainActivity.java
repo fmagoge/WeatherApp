@@ -15,8 +15,19 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.dmatrix.weatherapp.R;
+import com.dmatrix.weatherapp.adapters.WeatherRecyclerviewAdapter;
+import com.dmatrix.weatherapp.utils.Constants;
+import com.dmatrix.weatherapp.utils.TaskInfo;
+import com.dmatrix.weatherapp.utils.Util;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
@@ -30,12 +41,18 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
-        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener{
+        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener, TaskInfo {
 
     private GoogleMap googleMap;
     private static final String TAG = "MapsActivity";
@@ -51,6 +68,11 @@ public class MainActivity extends AppCompatActivity implements
     private TextView textLocation;
     String city, weatherPosition;
 
+    private  RecyclerView recyclerView;
+    private   WeatherRecyclerviewAdapter recyclerViewAdapter;
+    private   RecyclerView.LayoutManager recyclerViewLayoutManager;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +87,11 @@ public class MainActivity extends AppCompatActivity implements
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         textLocation = findViewById(R.id.textLocation);
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(false);
+        recyclerViewLayoutManager = new LinearLayoutManager(this);
+
+
         getDeviceLocation();
     }
 
@@ -183,6 +210,12 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onTaskDone(String output) {
+        Log.d("### OUTPUT", output);
+        recyclerViewAdapter = new WeatherRecyclerviewAdapter(Util.getJsonArrayList(output),getApplicationContext());
+        recyclerViewAdapter.notifyDataSetChanged();
+    }
 
     private void getLocationPermission() {
         locationPermissionGranted = false;
@@ -207,13 +240,17 @@ public class MainActivity extends AppCompatActivity implements
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
-                            Log.d(TAG, "Latitude: " + lastKnownLocation.getLatitude());
-                            Log.d(TAG, "Longitude: " + lastKnownLocation.getLongitude());
-                            getLocationAddress(lastKnownLocation.getLatitude(),lastKnownLocation.getLongitude());
-                            googleMap.addMarker(new MarkerOptions().position( new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())).title(addresses.get(0).getLocality()+" ,"+addresses.get(0).getCountryName()));
-                            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                    new LatLng(lastKnownLocation.getLatitude(),
-                                            lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                            if (lastKnownLocation != null) {
+                                Log.d(TAG, "Latitude: " + lastKnownLocation.getLatitude());
+                                Log.d(TAG, "Longitude: " + lastKnownLocation.getLongitude());
+                                getLocationAddress(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                                googleMap.addMarker(new MarkerOptions().position(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())).title(addresses.get(0).getLocality() + " ," + addresses.get(0).getCountryName()));
+                                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                                        new LatLng(lastKnownLocation.getLatitude(),
+                                                lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                            }else{
+                                //TODO - enable Location settings
+                            }
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.");
                             Log.e(TAG, "Exception: %s", task.getException());
@@ -239,13 +276,65 @@ public class MainActivity extends AppCompatActivity implements
 
         String address = addresses.get(0).getAddressLine(0);
         city = addresses.get(0).getLocality();
-        String country = addresses.get(0).getCountryName();
         weatherPosition = addresses.get(0).getPostalCode();
 
-        Toast.makeText(MainActivity.this, address+" ,"+city+" ,"+ weatherPosition +" ,"+country, Toast.LENGTH_LONG).show();
+
+        String url =  String.valueOf(new StringBuilder(Constants.BASE_URL)
+                .append("?")
+                .append(Constants.LAT)
+                .append(latitude)
+                .append(Constants.LON)
+                .append(longitude)
+                .append(Constants.EXCLUDE)
+                .append(Constants.API_KEY));
+
+        StringRequest request = new StringRequest(url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String string) {
+                parseJsonData(string);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Toast.makeText(getApplicationContext(), "Some error occurred!!", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+        RequestQueue rQueue = Volley.newRequestQueue(MainActivity.this);
+        rQueue.add(request);
         textLocation.setText(address);
     }
 
+    void parseJsonData(String jsonString) {
+
+        ArrayList<HashMap<String, String>> dataMapArrayList;
+        HashMap<String, String> resultMap = new HashMap<>();
+
+        try {
+            JSONObject object = new JSONObject(jsonString);
+            JSONArray dailyWeatherArray = null;
+            try {
+                dailyWeatherArray = object.getJSONArray("daily");
+
+
+                dataMapArrayList = Util.getJsonArrayList(dailyWeatherArray.toString());
+
+                for (int i=0; i<5; i++){
+                    resultMap = dataMapArrayList.get(i);
+
+
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
     private void pickCurrentPlace() {
         if (googleMap == null) {
             return;
@@ -265,4 +354,5 @@ public class MainActivity extends AppCompatActivity implements
             getLocationPermission();
         }
     }
+
 }
