@@ -10,74 +10,40 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dmatrix.weatherapp.R;
+import com.dmatrix.weatherapp.models.Forecast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecyclerviewAdapter.WeatherViewHolder> {
 
+    private List<Forecast> forecastList;
     private Context context;
-    private ArrayList<HashMap<String, String>> dataMapArrayList;
-    private HashMap<String, String> resultMap = new HashMap<>();
 
-    public WeatherRecyclerviewAdapter(ArrayList<HashMap<String, String>> dataMapArrayList, Context context) {
+    public WeatherRecyclerviewAdapter(List<Forecast> forecastList, Context context) {
+        this.forecastList = forecastList;
         this.context = context;
-        this.dataMapArrayList = dataMapArrayList;
     }
 
-    @NonNull
+
     @Override
     public WeatherViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.weather_item,parent,false);
-        WeatherViewHolder weatherViewHolder = new WeatherViewHolder(view);
-        return weatherViewHolder;
+        return new WeatherViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull WeatherViewHolder holder, int position) {
-        resultMap = dataMapArrayList.get(position);
-        holder.textDay.setText(resultMap.get("dt_txt"));
-
-        String tempkey = "temp";
-        String weatherKey = "weather";
-
-        JSONObject jsonObjectTemp = null;
-        String min_temp ="min";
-        String max_temp = "max";
-
-        try {
-            jsonObjectTemp = new JSONObject(tempkey);
-            min_temp = jsonObjectTemp.getString("min");
-            max_temp = jsonObjectTemp.getString("max");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        holder.textTemp.setText(max_temp);
-
-        String description = "";
-        try {
-            JSONArray jsonArray = new JSONArray(weatherKey);
-            JSONObject jsonObject = jsonArray.getJSONObject(0);
-            description = jsonObject.getString("description");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        holder.textOutlook.setText(description);
+        holder.textDay.setText(forecastList.get(position).getDay());
+        holder.textTemp.setText(forecastList.get(position).getMaxTemp().toString());
+        holder.textOutlook.setText(forecastList.get(position).getDescription());
     }
 
     @Override
     public int getItemCount() {
-        if (dataMapArrayList==null)
-            return 0;
-        return dataMapArrayList.size();
+        return forecastList.size();
     }
 
-    static class WeatherViewHolder extends RecyclerView.ViewHolder{
+    public static class WeatherViewHolder extends RecyclerView.ViewHolder{
         TextView textDay, textTemp, textOutlook;
 
 

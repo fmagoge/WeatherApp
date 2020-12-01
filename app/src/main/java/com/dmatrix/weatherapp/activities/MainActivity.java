@@ -19,15 +19,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.dmatrix.weatherapp.R;
 import com.dmatrix.weatherapp.adapters.WeatherRecyclerviewAdapter;
+import com.dmatrix.weatherapp.models.Daily;
+import com.dmatrix.weatherapp.models.Forecast;
+import com.dmatrix.weatherapp.models.WeatherApi;
 import com.dmatrix.weatherapp.utils.Constants;
-import com.dmatrix.weatherapp.utils.TaskInfo;
-import com.dmatrix.weatherapp.utils.Util;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
@@ -40,19 +39,15 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
-        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener, TaskInfo {
+        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
 
     private GoogleMap googleMap;
     private static final String TAG = "MapsActivity";
@@ -67,16 +62,24 @@ public class MainActivity extends AppCompatActivity implements
     private List<Address> addresses;
     private TextView textLocation;
     String city, weatherPosition;
+    private List<Forecast> forecasts;
 
     private  RecyclerView recyclerView;
-    private   WeatherRecyclerviewAdapter recyclerViewAdapter;
-    private   RecyclerView.LayoutManager recyclerViewLayoutManager;
+    private  WeatherRecyclerviewAdapter recyclerViewAdapter;
+    private  RecyclerView.LayoutManager recyclerViewLayoutManager;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(false);
+        recyclerViewLayoutManager = new LinearLayoutManager(this);
+
+
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapFragment);
@@ -87,11 +90,6 @@ public class MainActivity extends AppCompatActivity implements
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         textLocation = findViewById(R.id.textLocation);
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setHasFixedSize(false);
-        recyclerViewLayoutManager = new LinearLayoutManager(this);
-
-
         getDeviceLocation();
     }
 
@@ -150,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(getClass().getSimpleName(), String.format("##### Dragged to %f:%f",
                         position.latitude,
                         position.longitude));
+                forecasts = new ArrayList<>();
                 getLocationAddress(position.latitude,position.longitude);
             }
         });
@@ -208,13 +207,6 @@ public class MainActivity extends AppCompatActivity implements
                 return super.onOptionsItemSelected(item);
 
         }
-    }
-
-    @Override
-    public void onTaskDone(String output) {
-        Log.d("### OUTPUT", output);
-        recyclerViewAdapter = new WeatherRecyclerviewAdapter(Util.getJsonArrayList(output),getApplicationContext());
-        recyclerViewAdapter.notifyDataSetChanged();
     }
 
     private void getLocationPermission() {
@@ -288,53 +280,47 @@ public class MainActivity extends AppCompatActivity implements
                 .append(Constants.EXCLUDE)
                 .append(Constants.API_KEY));
 
-        StringRequest request = new StringRequest(url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String string) {
-                parseJsonData(string);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Toast.makeText(getApplicationContext(), "Some error occurred!!", Toast.LENGTH_SHORT).show();
-
-            }
-        });
+        StringRequest request = new StringRequest(url, this::parseJsonData, volleyError ->
+                Toast.makeText(getApplicationContext(), "Some error occurred!!", Toast.LENGTH_SHORT).show());
 
         RequestQueue rQueue = Volley.newRequestQueue(MainActivity.this);
         rQueue.add(request);
         textLocation.setText(address);
+
     }
 
-    void parseJsonData(String jsonString) {
+    private void parseJsonData(String jsonString) {
+        Gson gson = new Gson();
+        WeatherApi weatherApi = gson.fromJson(jsonString, WeatherApi.class);
 
-        ArrayList<HashMap<String, String>> dataMapArrayList;
-        HashMap<String, String> resultMap = new HashMap<>();
+        List<Daily> dailyList = weatherApi.getDaily();
 
-        try {
-            JSONObject object = new JSONObject(jsonString);
-            JSONArray dailyWeatherArray = null;
-            try {
-                dailyWeatherArray = object.getJSONArray("daily");
+        for (Daily daily: dailyList){
+            Forecast forecast = new Forecast();
+            //Day
+            forecast.setDay(daily.getDt());
+            //Min Temp
+            forecast.setMinTemp(daily.getTemp().getMin());
+            //Max Temp
+            forecast.setMaxTemp(daily.getTemp().getMax());
+            //Main
+            forecast.setMainDesc(daily.getWeather().get(0).getMain());
+            //Description
+            forecast.setDescription(daily.getWeather().get(0).getDescription());
+            //Icon
+            forecast.setIcon(daily.getWeather().get(0).getIcon());
 
-
-                dataMapArrayList = Util.getJsonArrayList(dailyWeatherArray.toString());
-
-                for (int i=0; i<5; i++){
-                    resultMap = dataMapArrayList.get(i);
-
-
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
+            forecasts.add(forecast);
+            Log.d("FORECAST LIST", String.valueOf(forecasts.size()));
         }
 
+        recyclerViewAdapter = new WeatherRecyclerviewAdapter(forecasts, getApplicationContext());
+        recyclerView.setLayoutManager(recyclerViewLayoutManager);
+        recyclerView.setAdapter(recyclerViewAdapter);
+        recyclerViewAdapter.notifyDataSetChanged();
     }
+
+
     private void pickCurrentPlace() {
         if (googleMap == null) {
             return;
