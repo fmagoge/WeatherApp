@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dmatrix.weatherapp.R;
 import com.dmatrix.weatherapp.models.Forecast;
+import com.dmatrix.weatherapp.utils.Util;
 
 import java.util.List;
 
@@ -24,16 +25,17 @@ public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecy
         this.context = context;
     }
 
-
+    @NonNull
     @Override
     public WeatherViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.weather_item,parent,false);
-        return new WeatherViewHolder(view);
+        WeatherViewHolder weatherViewHolder = new WeatherViewHolder(view);
+        return weatherViewHolder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull WeatherViewHolder holder, int position) {
-        holder.textDay.setText(forecastList.get(position).getDay());
+        holder.textDay.setText(Util.convertToDayofWeek(forecastList.get(position).getDay()));
         holder.textTemp.setText(forecastList.get(position).getMaxTemp().toString());
         holder.textOutlook.setText(forecastList.get(position).getDescription());
     }
@@ -43,7 +45,7 @@ public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecy
         return forecastList.size();
     }
 
-    public static class WeatherViewHolder extends RecyclerView.ViewHolder{
+    static class WeatherViewHolder extends RecyclerView.ViewHolder{
         TextView textDay, textTemp, textOutlook;
 
 

@@ -4,9 +4,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class Util {
 
@@ -37,4 +41,15 @@ public class Util {
         }
         return null;
     }
+
+
+    public static String convertToDayofWeek(Integer millis){
+        Date date = new Date(millis);
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE", Locale.ENGLISH);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String formattedDate = sdf.format(date);
+        return formattedDate;
+    }
+
+
 }
