@@ -36,8 +36,11 @@ public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecy
     @Override
     public void onBindViewHolder(@NonNull WeatherViewHolder holder, int position) {
         holder.textDay.setText(Util.convertToDayofWeek(forecastList.get(position).getDay()));
-        holder.textTemp.setText(forecastList.get(position).getMaxTemp().toString());
-        holder.textOutlook.setText(forecastList.get(position).getDescription());
+        holder.textMinTemp.setText(forecastList.get(position).getMinTemp().toString());
+        holder.textMaxTemp.setText(forecastList.get(position).getMaxTemp().toString());
+        holder.textOutlook.setText(forecastList.get(position).getMainDesc());
+        holder.textOutlookDesc.setText(forecastList.get(position).getDescription());
+        holder.textIcon.setText(forecastList.get(position).getIcon());
     }
 
     @Override
@@ -46,14 +49,16 @@ public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecy
     }
 
     static class WeatherViewHolder extends RecyclerView.ViewHolder{
-        TextView textDay, textTemp, textOutlook;
-
+        TextView textDay, textMinTemp,textMaxTemp, textOutlook, textOutlookDesc, textIcon;
 
         public WeatherViewHolder(@NonNull View itemView) {
             super(itemView);
             textDay = itemView.findViewById(R.id.textDay);
-            textTemp = itemView.findViewById(R.id.textTemp);
+            textMinTemp = itemView.findViewById(R.id.textMinTemp);
+            textMaxTemp = itemView.findViewById(R.id.textMaxTemp);
             textOutlook = itemView.findViewById(R.id.textOutlook);
+            textOutlookDesc = itemView.findViewById(R.id.textOutlookDesc);
+            textIcon = itemView.findViewById(R.id.textIcon);
         }
     }
 }
