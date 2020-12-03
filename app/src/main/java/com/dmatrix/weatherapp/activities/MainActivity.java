@@ -10,6 +10,8 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -62,11 +64,15 @@ public class MainActivity extends AppCompatActivity implements
     private List<Forecast> forecasts;
     private boolean hasForecast;
 
+    private ImageView imageGeolocate;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        imageGeolocate = findViewById(R.id.ic_geolocate);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapFragment);
@@ -76,6 +82,13 @@ public class MainActivity extends AppCompatActivity implements
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         getDeviceLocation();
+
+        imageGeolocate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pickCurrentPlace();
+            }
+        });
     }
 
     @Override
@@ -170,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements
         Toast.makeText(this, marker.getTitle(), Toast.LENGTH_LONG).show();
     }
 
-    @Override
+   /* @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
 
@@ -189,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements
                 return super.onOptionsItemSelected(item);
 
         }
-    }
+    }*/
 
     private void getLocationPermission() {
         locationPermissionGranted = false;
