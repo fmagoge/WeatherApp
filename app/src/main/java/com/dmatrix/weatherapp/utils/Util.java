@@ -51,5 +51,15 @@ public class Util {
         return formattedDate;
     }
 
+    public static String convertKelvinsToCelsius(Double kelvins){
+        double cel = kelvins - 273.15d;
+        String celStr = String.format("%.1f",cel);
+        return celStr.concat(" ").concat(Constants.CELSIUS_SYMBOL);
+    }
+
+    public static String convertKelvinsToFahrenheit(Double kelvins){
+        String celStr = String.format("%.1f",((kelvins - 273.15) * 1.8) + 32);
+        return celStr.concat(" ").concat(Constants.FAHRENHEIT_SYMBOL);
+    }
 
 }

@@ -1,6 +1,10 @@
 package com.dmatrix.weatherapp.models;
 
-public class Forecast {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+
+public class Forecast implements Parcelable {
 
     private Integer day;
     private Double minTemp;
@@ -8,6 +12,43 @@ public class Forecast {
     private String mainDesc;
     private String description;
     private String icon;
+
+    public Forecast(){
+
+    }
+
+    protected Forecast(Parcel in) {
+        if (in.readByte() == 0) {
+            day = null;
+        } else {
+            day = in.readInt();
+        }
+        if (in.readByte() == 0) {
+            minTemp = null;
+        } else {
+            minTemp = in.readDouble();
+        }
+        if (in.readByte() == 0) {
+            maxTemp = null;
+        } else {
+            maxTemp = in.readDouble();
+        }
+        mainDesc = in.readString();
+        description = in.readString();
+        icon = in.readString();
+    }
+
+    public static final Creator<Forecast> CREATOR = new Creator<Forecast>() {
+        @Override
+        public Forecast createFromParcel(Parcel in) {
+            return new Forecast(in);
+        }
+
+        @Override
+        public Forecast[] newArray(int size) {
+            return new Forecast[size];
+        }
+    };
 
     public Integer getDay() {
         return day;
@@ -55,5 +96,35 @@ public class Forecast {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        if (day == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeInt(day);
+        }
+        if (minTemp == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeDouble(minTemp);
+        }
+        if (maxTemp == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeDouble(maxTemp);
+        }
+        parcel.writeString(mainDesc);
+        parcel.writeString(description);
+        parcel.writeString(icon);
     }
 }

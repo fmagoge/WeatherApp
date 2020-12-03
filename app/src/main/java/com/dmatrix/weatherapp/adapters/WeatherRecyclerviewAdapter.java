@@ -36,8 +36,8 @@ public class WeatherRecyclerviewAdapter extends RecyclerView.Adapter<WeatherRecy
     @Override
     public void onBindViewHolder(@NonNull WeatherViewHolder holder, int position) {
         holder.textDay.setText(Util.convertToDayofWeek(forecastList.get(position).getDay()));
-        holder.textMinTemp.setText(forecastList.get(position).getMinTemp().toString());
-        holder.textMaxTemp.setText(forecastList.get(position).getMaxTemp().toString());
+        holder.textMinTemp.setText(Util.convertKelvinsToFahrenheit(forecastList.get(position).getMinTemp()));
+        holder.textMaxTemp.setText(Util.convertKelvinsToFahrenheit(forecastList.get(position).getMaxTemp()));
         holder.textOutlook.setText(forecastList.get(position).getMainDesc());
         holder.textOutlookDesc.setText(forecastList.get(position).getDescription());
         holder.textIcon.setText(forecastList.get(position).getIcon());

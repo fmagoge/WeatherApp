@@ -7,4 +7,5 @@
     <string name="hint_drag_pin">Please drag pin to pick place where you \n know need to know the weather of...</string>
     <string name="action_geolocate">current location</string>
     <string name="text_need_permission">We need permissions to \n work with Location.</string>
+    <string name="forecast_for_this_area">Forecast for this area:</string>
 </resources>

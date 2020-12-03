@@ -1,28 +1,26 @@
 package com.dmatrix.weatherapp.activities;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.dmatrix.weatherapp.R;
-import com.dmatrix.weatherapp.adapters.WeatherRecyclerviewAdapter;
 import com.dmatrix.weatherapp.models.Daily;
 import com.dmatrix.weatherapp.models.Forecast;
 import com.dmatrix.weatherapp.models.WeatherApi;
@@ -60,23 +58,15 @@ public class MainActivity extends AppCompatActivity implements
     private boolean locationPermissionGranted;
 
     private List<Address> addresses;
-    private TextView textLocation;
     String city, weatherPosition;
     private List<Forecast> forecasts;
-
-    private  RecyclerView recyclerView;
-    private  WeatherRecyclerviewAdapter recyclerViewAdapter;
-    private  RecyclerView.LayoutManager recyclerViewLayoutManager;
+    private boolean hasForecast;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setHasFixedSize(true);
-        recyclerViewLayoutManager = new LinearLayoutManager(MainActivity.this);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapFragment);
@@ -85,8 +75,6 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        textLocation = findViewById(R.id.textLocation);
         getDeviceLocation();
     }
 
@@ -111,12 +99,7 @@ public class MainActivity extends AppCompatActivity implements
             city = "Drag to new position";
         }
 
-        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-            }
-        });
+        this.googleMap.setOnMapClickListener(latLng -> googleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng)));
 
         this.googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
@@ -146,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements
                         position.latitude,
                         position.longitude));
                 forecasts = new ArrayList<>();
+                hasForecast = true;
                 getLocationAddress(position.latitude,position.longitude);
             }
         });
@@ -178,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        forecasts = new ArrayList<>();
     }
 
     @Override
@@ -277,16 +262,15 @@ public class MainActivity extends AppCompatActivity implements
                 .append(Constants.EXCLUDE)
                 .append(Constants.API_KEY));
 
-        StringRequest request = new StringRequest(url, this::parseJsonData, volleyError ->
-                Toast.makeText(getApplicationContext(), "Some error occurred!!", Toast.LENGTH_SHORT).show());
+        StringRequest request = new StringRequest(url, string -> parseJsonData(string, address), volleyError -> {
+            Toast.makeText(getApplicationContext(), "Some error occurred!!", Toast.LENGTH_SHORT).show();
+        });
 
         RequestQueue rQueue = Volley.newRequestQueue(MainActivity.this);
         rQueue.add(request);
-        textLocation.setText(address);
-
     }
 
-    private void parseJsonData(String jsonString) {
+    private void parseJsonData(String jsonString, String address) {
         Gson gson = new Gson();
         WeatherApi weatherApi = gson.fromJson(jsonString, WeatherApi.class);
 
@@ -308,13 +292,15 @@ public class MainActivity extends AppCompatActivity implements
             forecast.setIcon(daily.getWeather().get(0).getIcon());
 
             forecasts.add(forecast);
-            Log.d("FORECAST LIST", String.valueOf(forecasts.size()));
         }
 
-        recyclerViewAdapter = new WeatherRecyclerviewAdapter(forecasts, getApplicationContext());
-        recyclerView.setLayoutManager(recyclerViewLayoutManager);
-        recyclerView.setAdapter(recyclerViewAdapter);
-        recyclerViewAdapter.notifyDataSetChanged();
+        if (hasForecast) {
+            Intent intent = new Intent(MainActivity.this, ForecastActivity.class);
+            intent.putExtra("address", address);
+            intent.putParcelableArrayListExtra("forecasts", (ArrayList<? extends Parcelable>) forecasts);
+            startActivity(intent);
+            hasForecast = false;
+        }
     }
 
 
@@ -324,6 +310,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         if (locationPermissionGranted) {
+            hasForecast = true;
             getDeviceLocation();
         } else {
             // The user has not granted permission.
