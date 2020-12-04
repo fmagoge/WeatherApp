@@ -8,10 +8,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -47,7 +46,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
-        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
+        OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener{
 
     private GoogleMap googleMap;
     private static final String TAG = "MapsActivity";
@@ -64,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements
     private List<Forecast> forecasts;
     private boolean hasForecast;
 
-    private ImageView imageGeolocate;
+    private SearchView search_input;
 
 
     @Override
@@ -72,13 +71,43 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageGeolocate = findViewById(R.id.ic_geolocate);
+        ImageView imageGeolocate = findViewById(R.id.ic_geolocate);
+        search_input = findViewById(R.id.search_input);
+
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapFragment);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
+
+        //Alternate better option but requires Billing enabled on Places Api
+        /*Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
+        AutocompleteSupportFragment autocompleteSupportFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        autocompleteSupportFragment.setTypeFilter(TypeFilter.ADDRESS);
+
+        autocompleteSupportFragment.setLocationBias(RectangularBounds.newInstance(
+                                new LatLng(-26.2711247, 28.1122661),
+                                new LatLng( -26.0991893, 27.8011599)));
+
+        autocompleteSupportFragment.setCountries("ZA");
+
+        autocompleteSupportFragment.setPlaceFields(Arrays.asList(com.google.android.libraries.places.api.model.Place.Field.ID,
+                com.google.android.libraries.places.api.model.Place.Field.NAME));
+
+        autocompleteSupportFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull com.google.android.libraries.places.api.model.Place place) {
+               getLocationAddress(place.getLatLng().latitude, place.getLatLng().longitude);
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+                Log.d("########",status.getStatusMessage());
+            }
+        });*/
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         getDeviceLocation();
@@ -89,7 +118,48 @@ public class MainActivity extends AppCompatActivity implements
                 pickCurrentPlace();
             }
         });
+
+        search_input.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                String location = search_input.getQuery().toString();
+                List<Address> addressList = null;
+
+                if(location != null || !location.equals("")){
+                    Geocoder geocoder = new Geocoder(MainActivity.this);
+                    try {
+                        addressList = geocoder.getFromLocationName(location, 1);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (addressList.size()>0) {
+                        Address address = addressList.get(0);
+                        LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                        googleMap.addMarker(new MarkerOptions().position(latLng).title(location).draggable(true));
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+
+                        getLocationAddress(address.getLatitude(), address.getLongitude());
+
+                        search_input.setQuery("", false);
+                        search_input.clearFocus();
+                    }else {
+                        Toast.makeText(MainActivity.this, "Cannot find Location : "+search_input.getQuery().toString(),Toast.LENGTH_LONG).show();
+                        search_input.setQuery("", false);
+                        search_input.clearFocus();
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
     }
+
 
     @Override
     protected void onStart() {
@@ -107,12 +177,26 @@ public class MainActivity extends AppCompatActivity implements
         this.googleMap.moveCamera(center);
         this.googleMap.animateCamera(zoom);
 
+        //Zoom in-out
+        this.googleMap.getUiSettings().setZoomControlsEnabled(true);
+        this.googleMap.getUiSettings().setZoomGesturesEnabled(true);
+        //Compass
+        this.googleMap.getUiSettings().setCompassEnabled(true);
+
         if (weatherPosition == null && city == null){
             weatherPosition = "Weather Postion";
             city = "Drag to new position";
         }
 
+
         this.googleMap.setOnMapClickListener(latLng -> googleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng)));
+
+        this.googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                googleMap.addMarker(new MarkerOptions().position(latLng).title(city).draggable(true));
+            }
+        });
 
         this.googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
@@ -176,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
         forecasts = new ArrayList<>();
+        Toast.makeText(MainActivity.this, "Press down and drag RED pin to required location, or just search", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -183,26 +268,6 @@ public class MainActivity extends AppCompatActivity implements
         Toast.makeText(this, marker.getTitle(), Toast.LENGTH_LONG).show();
     }
 
-   /* @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_geolocate:
-
-                 pickCurrentPlace();
-                 return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
-
-        }
-    }*/
 
     private void getLocationPermission() {
         locationPermissionGranted = false;
