@@ -39,10 +39,10 @@
 
             <ImageView
                 android:id="@+id/ic_geolocate"
-                android:layout_width="@dimen/_20sdp"
-                android:layout_height="@dimen/_20sdp"
-                android:layout_centerVertical="true"
+                android:layout_width="@dimen/_22sdp"
+                android:layout_height="@dimen/_22sdp"
                 android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
                 android:layout_marginEnd="@dimen/_10sdp"
                 android:src="@drawable/ic_geolocate" />
 

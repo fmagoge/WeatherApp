@@ -9,7 +9,6 @@ public class Forecast implements Parcelable {
     private Integer day;
     private Double minTemp;
     private Double maxTemp;
-    private String mainDesc;
     private String description;
     private String icon;
 
@@ -33,7 +32,7 @@ public class Forecast implements Parcelable {
         } else {
             maxTemp = in.readDouble();
         }
-        mainDesc = in.readString();
+
         description = in.readString();
         icon = in.readString();
     }
@@ -74,13 +73,6 @@ public class Forecast implements Parcelable {
         this.maxTemp = maxTemp;
     }
 
-    public String getMainDesc() {
-        return mainDesc;
-    }
-
-    public void setMainDesc(String mainDesc) {
-        this.mainDesc = mainDesc;
-    }
 
     public String getDescription() {
         return description;
@@ -123,7 +115,6 @@ public class Forecast implements Parcelable {
             parcel.writeByte((byte) 1);
             parcel.writeDouble(maxTemp);
         }
-        parcel.writeString(mainDesc);
         parcel.writeString(description);
         parcel.writeString(icon);
     }

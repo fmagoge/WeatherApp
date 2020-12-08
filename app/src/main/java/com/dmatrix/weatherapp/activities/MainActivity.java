@@ -139,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements
                         googleMap.addMarker(new MarkerOptions().position(latLng).title(location).draggable(true));
                         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
 
+                        hasForecast = true;
                         getLocationAddress(address.getLatitude(), address.getLongitude());
 
                         search_input.setQuery("", false);
@@ -362,14 +363,15 @@ public class MainActivity extends AppCompatActivity implements
             forecast.setMinTemp(daily.getTemp().getMin());
             //Max Temp
             forecast.setMaxTemp(daily.getTemp().getMax());
-            //Main
-            forecast.setMainDesc(daily.getWeather().get(0).getMain());
             //Description
             forecast.setDescription(daily.getWeather().get(0).getDescription());
             //Icon
             forecast.setIcon(daily.getWeather().get(0).getIcon());
 
             forecasts.add(forecast);
+            if (forecasts.size()==5){
+                break;
+            }
         }
 
         if (hasForecast) {

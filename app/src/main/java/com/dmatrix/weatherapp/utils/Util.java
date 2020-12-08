@@ -43,10 +43,12 @@ public class Util {
     }
 
 
-    public static String convertToDayofWeek(Integer millis){
-        Date date = new Date(millis);
+    public static String convertToDayofWeek(int millis){
+        Date date = new Date(millis * 1000L);
+        //SimpleDateFormat sdf = new SimpleDateFormat("EEE", Locale.ENGLISH);
         SimpleDateFormat sdf = new SimpleDateFormat("EEE", Locale.ENGLISH);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        //sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         String formattedDate = sdf.format(date);
         return formattedDate;
     }

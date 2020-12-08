@@ -7,6 +7,7 @@
     android:layout_margin="@dimen/_1sdp">
 
     <LinearLayout
+        android:id="@+id/linearWeatherItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_2sdp"
@@ -24,7 +25,7 @@
             <TextView
                 android:id="@+id/textDay"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="0.5"
                 android:text="Day"
                 android:background="@drawable/custom_widget_border"
@@ -35,11 +36,22 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
-                android:text="ICON"
+                android:text="@string/wi_day_sprinkle"
                 android:layout_span="3"
-                android:gravity="center"
+                android:gravity="center|center_horizontal"
+                android:textAppearance="?android:attr/textAppearanceLarge"
                 android:background="@drawable/custom_widget_border"
                 android:textSize="@dimen/_20sdp"/>
+
+            <!--<TextView
+                android:id="@+id/textIcon"
+                android:layout_width="0dp"
+                android:layout_weight="0.5"
+                android:gravity="center|center_horizontal"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textSize="130sp"
+                android:text="@string/wi_day_sprinkle"/>-->
         </LinearLayout>
 
         <LinearLayout
@@ -49,9 +61,22 @@
             android:orientation="horizontal">
 
             <TextView
+                android:id="@+id/textMinTempLabel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.1"
+                android:text="Min"
+                android:gravity="top|right"
+                android:paddingEnd="@dimen/_2sdp"
+                android:background="@drawable/custom_widget_border"
+                android:textSize="@dimen/_10sdp"
+                />
+
+            <TextView
                 android:id="@+id/textMinTemp"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
+                android:paddingStart="@dimen/_2sdp"
                 android:layout_weight="0.2"
                 android:text="Min Temp"
                 android:background="@drawable/custom_widget_border"
@@ -59,23 +84,29 @@
                 />
 
             <TextView
+                android:id="@+id/textMaxTempLabel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.1"
+                android:paddingEnd="@dimen/_2sdp"
+                android:text="Max"
+                android:gravity="top|right"
+                android:background="@drawable/custom_widget_border"
+                android:textSize="@dimen/_10sdp"
+                />
+
+            <TextView
                 android:id="@+id/textMaxTemp"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="0.2"
+                android:paddingStart="@dimen/_2sdp"
                 android:text="Max Temp"
                 android:background="@drawable/custom_widget_border"
                 android:textSize="@dimen/_15sdp"
                 />
 
-            <TextView
-                android:id="@+id/textOutlook"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.3"
-                android:text="Rain"
-                android:background="@drawable/custom_widget_border"
-                android:textSize="@dimen/_20sdp"/>
+
 
             <TextView
                 android:id="@+id/textOutlookDesc"

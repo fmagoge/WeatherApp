@@ -2,10 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
+    <!--<item
         android:id="@+id/action_geolocate"
         android:icon="@drawable/ic_geolocate"
         android:title="@string/action_geolocate"
-        app:showAsAction="always|withText" />
+        app:showAsAction="always|withText" />-->
+
+    <item android:id="@+id/menu_units_measurement"
+        android:title="@string/units_of_measurement"/>
 
 </menu>
